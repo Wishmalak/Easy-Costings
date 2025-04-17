@@ -1,97 +1,63 @@
-const API = "https://script.google.com/macros/s/AKfycbw-JT6d9sVkxXSB9-oBDTGauDjg_UV5f9AG3ZofAH9sq5UWh4ohXOZd9y0LbcOn0Y3CHw/exec";
-let ingredientsData = [];
+ // Replace with your own Apps Script URL (no trailing query)
+  const API = "https://script.google.com/macros/s/AKfycbw-JT6d9sVkxXSB9-oBDTGauDjg_UV5f9AG3ZofAH9sq5UWh4ohXOZd9y0LbcOn0Y3CHw/exec";
 
-document.addEventListener("DOMContentLoaded", () => {
-  // Wire up buttons
-  document.getElementById("calc-btn")
-          .addEventListener("click", calc);
-  document.getElementById("add-ingredient-btn")
-          .addEventListener("click", addIngredient);
-  document.getElementById("calc-total-btn")
-          .addEventListener("click", calculateTotal);
+  let ingredientsData = [];
 
-  // Preload ingredients list
-  fetch(API)
+  // 1. Fetch ingredients on page load, then add one row
+  fetch(`${API_URL}?list=ingredients`)
     .then(res => {
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       return res.json();
     })
     .then(data => {
       ingredientsData = data;
-      addIngredient(); // start with one row
+      addIngredient();
     })
     .catch(err => console.error("Error loading ingredients:", err));
-});
 
-function calc() {
-  const name     = document.getElementById("name").value.trim();
-  const qty      = parseFloat(document.getElementById("qty").value);
-  const margin   = parseFloat(document.getElementById("margin").value);
-  const currency = document.getElementById("currency").value.trim();
+  // 2. Add a new ingredient row
+  function addIngredient() {
+    const container = document.getElementById("ingredient-list");
+    const row = document.createElement("div");
+    row.style.marginBottom = "10px";
 
-  // Build safe query string
-  const params = new URLSearchParams({ name, qty, margin, currency });
-
-  fetch(`${API}?${params}`)
-    .then(r => {
-      if (!r.ok) throw new Error(`Server error: ${r.status}`);
-      return r.json();
-    })
-    .then(data => {
-      document.getElementById("result").innerHTML =
-        `Cost: ${currency} ${data.cost.toFixed(2)}<br/>` +
-        `Gross: ${currency} ${data.gross.toFixed(2)}<br/>` +
-        `Net:   ${currency} ${data.net.toFixed(2)}`;
-    })
-    .catch(err => {
-      console.error("Calculation error:", err);
-      document.getElementById("result").innerText = "Error calculating cost.";
+    // Dropdown
+    const select = document.createElement("select");
+    ingredientsData.forEach(({ name, unit }) => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = `${name} (${unit})`;
+      select.appendChild(opt);
     });
-}
 
-function addIngredient() {
-  const div = document.createElement("div");
-  div.style.marginBottom = "0.5em";
+    // Qty input
+    const qtyInput = document.createElement("input");
+    qtyInput.type = "number";
+    qtyInput.placeholder = "Qty";
+    qtyInput.style.marginLeft = "5px";
 
-  const select = document.createElement("select");
-  ingredientsData.forEach(i => {
-    const opt = document.createElement("option");
-    opt.value     = i.name;
-    opt.innerText = i.name;
-    select.appendChild(opt);
-  });
+    row.append(select, qtyInput);
+    container.appendChild(row);
+  }
 
-  const qtyInput = document.createElement("input");
-  qtyInput.type        = "number";
-  qtyInput.placeholder = "Qty";
-  qtyInput.style.width = "4em";
-  qtyInput.style.marginLeft = "0.5em";
+  // 3. Calculate totals
+  function calculateTotal() {
+    const yieldVal = Number(document.getElementById("yield").value) || 1;
+    const wastage = Number(document.getElementById("wastage").value) / 100 || 0;
+    let totalCost = 0;
 
-  div.appendChild(select);
-  div.appendChild(qtyInput);
-  document.getElementById("ingredient-list").appendChild(div);
-}
+    document.querySelectorAll("#ingredient-list > div").forEach(row => {
+      const name = row.querySelector("select").value;
+      const qty = Number(row.querySelector("input").value) || 0;
+      const ingredient = ingredientsData.find(i => i.name === name);
+      if (ingredient) totalCost += qty * ingredient.costPerUnit;
+    });
 
-function calculateTotal() {
-  const yieldVal = Number(document.getElementById("yield").value);
-  const wastage  = Number(document.getElementById("wastage").value);
-  let totalCost  = 0;
+    const adjusted = totalCost / (1 - wastage);
+    const perPortion = adjusted / yieldVal;
 
-  const rows = document.querySelectorAll("#ingredient-list > div");
-  rows.forEach(row => {
-    const name = row.querySelector("select").value;
-    const qty  = Number(row.querySelector("input").value) || 0;
-    const ingredient = ingredientsData.find(i => i.name === name);
-    if (ingredient) {
-      totalCost += qty * ingredient.costPerUnit;
-    }
-  });
-
-  const adjusted    = totalCost / (1 - (wastage / 100) || 1);
-  const portionCost = adjusted / (yieldVal || 1);
-
-  document.getElementById("total-output").innerText =
-    `Total Cost:           $${totalCost.toFixed(2)}\n` +
-    `Adjusted (w/ wastage): $${adjusted.toFixed(2)}\n` +
-    `Cost per Portion:     $${portionCost.toFixed(2)}`;
-}
+    document.getElementById("total-output").textContent =
+      `Total Cost: $${totalCost.toFixed(2)}\n` +
+      `Adjusted (with wastage): $${adjusted.toFixed(2)}\n` +
+      `Cost per Portion: $${perPortion.toFixed(2)}`;
+  }
