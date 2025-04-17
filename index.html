@@ -6,71 +6,96 @@
     body { font-family: Arial, sans-serif; padding: 20px; }
     select, input { margin: 5px; padding: 5px; }
     #ingredient-list div { margin-bottom: 10px; }
+    button { margin: 5px; padding: 5px 10px; }
   </style>
 </head>
 <body>
   <h1>Create Your Recipe</h1>
+
+  <!-- Ingredient rows -->
   <div id="ingredient-list"></div>
+
+  <!-- Buttons for adding ingredients and calculating -->
   <button onclick="addIngredient()">+ Add Ingredient</button>
+  <button onclick="calculateTotal()">Calculate Cost</button>
 
   <h3>Recipe Settings</h3>
-  <label>Yield (portions): <input type="number" id="yield" value="1"></label><br>
-  <label>Wastage (%): <input type="number" id="wastage" value="0"></label><br>
-  <button onclick="calculateTotal()">Calculate Cost</button>
+  <label>
+    Yield (portions):
+    <input type="number" id="yield" value="1" min="1">
+  </label><br>
+  <label>
+    Wastage (%):
+    <input type="number" id="wastage" value="0" min="0" max="100">
+  </label><br>
 
   <h3>Result</h3>
   <pre id="total-output"></pre>
 
+  <!-- ========== SCRIPT BLOCK ========== -->
   <script>
-    const API_URL = "YOUR_SCRIPT_URL"; // Replace this with your Google Apps Script URL
+    // Replace with your own Apps Script URL (no trailing query)
+    const API_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+
     let ingredientsData = [];
 
+    // 1. On load, fetch ingredient list then add first row
     fetch(`${API_URL}?list=ingredients`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+        return res.json();
+      })
       .then(data => {
         ingredientsData = data;
         addIngredient();
-      });
+      })
+      .catch(err => console.error("Error loading ingredients:", err));
 
+    // 2. Add a new ingredient row (select + qty)
     function addIngredient() {
-      const div = document.createElement("div");
+      const container = document.getElementById("ingredient-list");
+      const row = document.createElement("div");
+      row.style.marginBottom = "10px";
+
+      // Dropdown of ingredients
       const select = document.createElement("select");
-      ingredientsData.forEach(i => {
+      ingredientsData.forEach(({ name, unit }) => {
         const opt = document.createElement("option");
-        opt.value = i.name;
-        opt.innerText = `${i.name} (${i.unit})`;
+        opt.value = name;
+        opt.textContent = `${name} (${unit})`;
         select.appendChild(opt);
       });
 
+      // Quantity input
       const qtyInput = document.createElement("input");
-      qtyInput.placeholder = "Qty";
       qtyInput.type = "number";
+      qtyInput.placeholder = "Qty";
+      qtyInput.style.marginLeft = "5px";
 
-      div.appendChild(select);
-      div.appendChild(qtyInput);
-      document.getElementById("ingredient-list").appendChild(div);
+      row.append(select, qtyInput);
+      container.appendChild(row);
     }
 
+    // 3. Calculate total, adjusted cost, and per-portion cost
     function calculateTotal() {
-      const yieldVal = Number(document.getElementById("yield").value);
-      const wastage = Number(document.getElementById("wastage").value);
-      let totalCost = 0;
+      const yieldVal = Number(document.getElementById("yield").value) || 1;
+      const wastage  = (Number(document.getElementById("wastage").value) || 0) / 100;
+      let totalCost  = 0;
 
-      const rows = document.querySelectorAll("#ingredient-list > div");
-      rows.forEach(row => {
+      document.querySelectorAll("#ingredient-list > div").forEach(row => {
         const name = row.querySelector("select").value;
-        const qty = Number(row.querySelector("input").value);
+        const qty  = Number(row.querySelector("input").value) || 0;
         const ingredient = ingredientsData.find(i => i.name === name);
         if (ingredient) totalCost += qty * ingredient.costPerUnit;
       });
 
-      const adjusted = totalCost / (1 - (wastage / 100));
-      const portionCost = adjusted / yieldVal;
+      const adjusted   = totalCost / (1 - wastage);
+      const perPortion = adjusted / yieldVal;
 
-      document.getElementById("total-output").innerText =
+      document.getElementById("total-output").textContent =
         `Total Cost: $${totalCost.toFixed(2)}\n` +
         `Adjusted (with wastage): $${adjusted.toFixed(2)}\n` +
-        `Cost per Portion: $${portionCost.toFixed(2)}`;
+        `Cost per Portion: $${perPortion.toFixed(2)}`;
     }
   </script>
 </body>
