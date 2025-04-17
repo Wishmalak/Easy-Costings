@@ -1,19 +1,77 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Recipe Builder</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    select, input { margin: 5px; padding: 5px; }
+    #ingredient-list div { margin-bottom: 10px; }
+  </style>
+</head>
 <body>
-  <h1>Cost Calculator</h1>
-  <input id="name" placeholder="Ingredient">
-  <input id="qty" type="number" placeholder="Qty">
-  <button onclick="calc()">Calculate</button>
-  <div id="result"></div>
+  <h1>Create Your Recipe</h1>
+  <div id="ingredient-list"></div>
+  <button onclick="addIngredient()">+ Add Ingredient</button>
 
-  <script src="app.js"></script>
+  <h3>Recipe Settings</h3>
+  <label>Yield (portions): <input type="number" id="yield" value="1"></label><br>
+  <label>Wastage (%): <input type="number" id="wastage" value="0"></label><br>
+  <button onclick="calculateTotal()">Calculate Cost</button>
+
+  <h3>Result</h3>
+  <pre id="total-output"></pre>
+
+  <script>
+    const API_URL = "YOUR_SCRIPT_URL"; // Replace this with your Google Apps Script URL
+    let ingredientsData = [];
+
+    fetch(`${API_URL}?list=ingredients`)
+      .then(res => res.json())
+      .then(data => {
+        ingredientsData = data;
+        addIngredient();
+      });
+
+    function addIngredient() {
+      const div = document.createElement("div");
+      const select = document.createElement("select");
+      ingredientsData.forEach(i => {
+        const opt = document.createElement("option");
+        opt.value = i.name;
+        opt.innerText = `${i.name} (${i.unit})`;
+        select.appendChild(opt);
+      });
+
+      const qtyInput = document.createElement("input");
+      qtyInput.placeholder = "Qty";
+      qtyInput.type = "number";
+
+      div.appendChild(select);
+      div.appendChild(qtyInput);
+      document.getElementById("ingredient-list").appendChild(div);
+    }
+
+    function calculateTotal() {
+      const yieldVal = Number(document.getElementById("yield").value);
+      const wastage = Number(document.getElementById("wastage").value);
+      let totalCost = 0;
+
+      const rows = document.querySelectorAll("#ingredient-list > div");
+      rows.forEach(row => {
+        const name = row.querySelector("select").value;
+        const qty = Number(row.querySelector("input").value);
+        const ingredient = ingredientsData.find(i => i.name === name);
+        if (ingredient) totalCost += qty * ingredient.costPerUnit;
+      });
+
+      const adjusted = totalCost / (1 - (wastage / 100));
+      const portionCost = adjusted / yieldVal;
+
+      document.getElementById("total-output").innerText =
+        `Total Cost: $${totalCost.toFixed(2)}\n` +
+        `Adjusted (with wastage): $${adjusted.toFixed(2)}\n` +
+        `Cost per Portion: $${portionCost.toFixed(2)}`;
+    }
+  </script>
 </body>
 </html>
-<input id="margin" type="number" placeholder="Margin %">
-<select id="currency">
-  <option value="USD">USD</option>
-  <option value="LKR">LKR</option>
-  <option value="EUR">EUR</option>
-  <option value="GBP">GBP</option>
-</select>
