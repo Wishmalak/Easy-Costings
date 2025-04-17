@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Recipe Builder</title>
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     select, input { margin: 5px; padding: 5px; }
@@ -32,14 +35,14 @@
   <h3>Result</h3>
   <pre id="total-output"></pre>
 
-  <!-- ========== SCRIPT BLOCK ========== -->
-  <script>
-    // Replace with your own Apps Script URL (no trailing query)
-    const API_URL = "https://script.google.com/macros/s/AKfycbw-JT6d9sVkxXSB9-oBDTGauDjg_UV5f9AG3ZofAH9sq5UWh4ohXOZd9y0LbcOn0Y3CHw/exec";
+  <!-- Tom Select JS -->
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbw-JT6d9sVkxXSB9-oBDTGauDjg_UV5f9AG3ZofAH9sq5UWh4ohXOZd9y0LbcOn0Y3CHw/exec";
     let ingredientsData = [];
 
-    // 1. On load, fetch ingredient list then add first row
+    // On load, fetch ingredient list then add first row
     fetch(`${API_URL}?list=ingredients`)
       .then(res => {
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
@@ -51,14 +54,12 @@
       })
       .catch(err => console.error("Error loading ingredients:", err));
 
-    // 2. Add a new ingredient row (select + qty)
     function addIngredient() {
       const container = document.getElementById("ingredient-list");
       const row = document.createElement("div");
-      row.style.marginBottom = "10px";
 
-      // Dropdown of ingredients
       const select = document.createElement("select");
+      select.className = "ingredient-dropdown";
       ingredientsData.forEach(({ name, unit }) => {
         const opt = document.createElement("option");
         opt.value = name;
@@ -66,7 +67,6 @@
         select.appendChild(opt);
       });
 
-      // Quantity input
       const qtyInput = document.createElement("input");
       qtyInput.type = "number";
       qtyInput.placeholder = "Qty";
@@ -74,9 +74,17 @@
 
       row.append(select, qtyInput);
       container.appendChild(row);
+
+      new TomSelect(select, {
+        create: false,
+        sortField: {
+          field: "text",
+          direction: "asc"
+        },
+        placeholder: "Type to search..."
+      });
     }
 
-    // 3. Calculate total, adjusted cost, and per-portion cost
     function calculateTotal() {
       const yieldVal = Number(document.getElementById("yield").value) || 1;
       const wastage  = (Number(document.getElementById("wastage").value) || 0) / 100;
