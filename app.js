@@ -34,13 +34,12 @@ document.addEventListener("DOMContentLoaded", () => {
     .catch(err => console.error("Error loading ingredients:", err));
 });
 
-// ── Add a new ingredient row (name select + qty input + unit select) ─
 function addIngredient() {
   const container = document.getElementById("ingredient-list");
   const row = document.createElement("div");
   row.classList.add("ingredient-row");
 
-  // 1️⃣ Create Name dropdown
+  // Name dropdown
   const nameSel = document.createElement("select");
   nameSel.className = "ingredient-select";
   ingredientsData.forEach(({ name, unit }) => {
@@ -49,29 +48,41 @@ function addIngredient() {
     opt.textContent = `${name} (${unit})`;
     nameSel.appendChild(opt);
   });
-  row.appendChild(nameSel);
 
-  // 2️⃣ Qty field
+  // Qty input
   const qtyInput = document.createElement("input");
   qtyInput.type = "number";
   qtyInput.placeholder = "Qty";
   qtyInput.className = "qty-input";
-  row.appendChild(qtyInput);
 
-  // 3️⃣ Unit dropdown
+  // Unit dropdown
   const unitSel = document.createElement("select");
   unitSel.className = "unit-select";
-  // Populate units based on first ingredient or default
-  Object.keys(weightToKg).forEach(u => {
-    const o = document.createElement("option");
-    o.value = u;
-    o.textContent = u;
-    unitSel.appendChild(o);
-  });
-  row.appendChild(unitSel);
 
-  // 4️⃣ Now that everything’s in the DOM, initialize Tom Select
+  // ➕ Dynamic unit population based on ingredient
+  function populateUnits() {
+    const ing = ingredientsData.find(i => i.name === nameSel.value);
+    const bu = ing?.unit.toLowerCase() || "kg";
+    unitSel.innerHTML = ""; // Clear previous
+    const opts = (bu === "kg" || bu === "g" || bu === "mg")
+      ? Object.keys(weightToKg)
+      : Object.keys(volumeToL);
+    opts.forEach(u => {
+      const o = document.createElement("option");
+      o.value = u;
+      o.textContent = u;
+      unitSel.appendChild(o);
+    });
+  }
+
+  nameSel.addEventListener("change", populateUnits);
+  populateUnits(); // Initial fill
+
+  // Add elements to row and DOM
+  row.append(nameSel, qtyInput, unitSel);
   container.appendChild(row);
+
+  // Initialize Tom Select
   new TomSelect(nameSel, {
     create: false,
     sortField: { field: "text", direction: "asc" },
