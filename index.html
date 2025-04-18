@@ -1,94 +1,49 @@
-<!-- Tom Select JS -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recipe Builder</title>
+
+  <!-- Tom Select CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css"
+    rel="stylesheet"
+  />
+
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    select, input { margin: 5px; padding: 5px; }
+    #ingredient-list div { margin-bottom: 10px; }
+    button { margin: 5px; padding: 5px 10px; }
+  </style>
+</head>
+<body>
+  <h1>Create Your Recipe</h1>
+
+  <!-- Ingredient rows -->
+  <div id="ingredient-list"></div>
+
+  <!-- Buttons for adding ingredients and calculating -->
+  <button onclick="addIngredient()">+ Add Ingredient</button>
+  <button onclick="calculateTotal()">Calculate Cost</button>
+
+  <h3>Recipe Settings</h3>
+  <label>
+    Yield (portions):
+    <input type="number" id="yield" value="1" min="1">
+  </label><br>
+  <label>
+    Wastage (%):
+    <input type="number" id="wastage" value="0" min="0" max="100">
+  </label><br>
+
+  <h3>Result</h3>
+  <pre id="total-output"></pre>
+
+  <!-- Tom Select JS -->
   <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbw-JT6d9sVkxXSB9-oBDTGauDjg_UV5f9AG3ZofAH9sq5UWh4ohXOZd9y0LbcOn0Y3CHw/exec";
-    let ingredientsData = [];
-
-    // ── New: Convert imperial units to metric ─────────────────────────
-    function convertToMetric(qty, unit) {
-      const conversions = {
-        "oz":    { qty: qty *   28.35, unit: "g"  },
-        "lb":    { qty: qty *  453.59, unit: "g"  },
-        "fl oz": { qty: qty *   29.57, unit: "ml" },
-        "cup":   { qty: qty *  240.00, unit: "ml" },
-        "tbsp":  { qty: qty *   15.00, unit: "ml" },
-        "tsp":   { qty: qty *    5.00, unit: "ml" },
-      };
-      return conversions[unit] || { qty, unit };
-    }
-
-    // ── Fetch ingredients on page load and add the first row ───────────
-    document.addEventListener("DOMContentLoaded", () => {
-      fetch(`${API_URL}?list=ingredients`)
-        .then(res => {
-          if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-          return res.json();
-        })
-        .then(data => {
-          ingredientsData = data;
-          addIngredient();
-        })
-        .catch(err => console.error("Error loading ingredients:", err));
-    });
-
-    // ── Add a new ingredient row with Tom Select dropdown ──────────────
-    function addIngredient() {
-      const container = document.getElementById("ingredient-list");
-      const row = document.createElement("div");
-
-      const select = document.createElement("select");
-      select.className = "ingredient-dropdown";
-      ingredientsData.forEach(({ name, unit }) => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = `${name} (${unit})`;
-        select.appendChild(opt);
-      });
-
-      const qtyInput = document.createElement("input");
-      qtyInput.type = "number";
-      qtyInput.placeholder = "Qty";
-      qtyInput.style.marginLeft = "5px";
-
-      row.append(select, qtyInput);
-      container.appendChild(row);
-
-      new TomSelect(select, {
-        create: false,
-        sortField: { field: "text", direction: "asc" },
-        placeholder: "Type to search..."
-      });
-    }
-
-    // ── New: Calculate total, line‑item, adjusted & per‑portion costs ────
-    function calculateTotal() {
-      const yieldVal = Number(document.getElementById("yield").value) || 1;
-      const wastage  = (Number(document.getElementById("wastage").value) || 0) / 100;
-      let totalCost = 0;
-      let output    = "";
-
-      document.querySelectorAll("#ingredient-list > div").forEach(row => {
-        const name     = row.querySelector("select").value;
-        const rawQty   = Number(row.querySelector("input").value) || 0;
-        const ing      = ingredientsData.find(i => i.name === name);
-        if (!ing) return;
-
-        // convert units ➔ metric
-        const { qty: mQty, unit: mUnit } = convertToMetric(rawQty, ing.unit);
-        const lineCost = mQty * ing.costPerUnit;
-        totalCost += lineCost;
-
-        output += `${name}: ${mQty.toFixed(2)} ${mUnit} × $${ing.costPerUnit.toFixed(2)} = $${lineCost.toFixed(2)}\n`;
-      });
-
-      const adjusted   = totalCost / (1 - wastage);
-      const perPortion = adjusted / yieldVal;
-
-      output += `\nTotal Cost: $${totalCost.toFixed(2)}\n`;
-      output += `Adjusted (w/ wastage): $${adjusted.toFixed(2)}\n`;
-      output += `Cost per Portion: $${perPortion.toFixed(2)}`;
-
-      document.getElementById("total-output").textContent = output;
-    }
-  </script>
+  <!-- Your application logic -->
+  <script src="app.js"></script>
+</body>
+</html>
