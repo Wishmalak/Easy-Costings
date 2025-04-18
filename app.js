@@ -40,7 +40,7 @@ function addIngredient() {
   const row = document.createElement("div");
   row.classList.add("ingredient-row");
 
-  // 1️⃣ Ingredient name dropdown (Tom Select)
+  // 1️⃣ Create Name dropdown
   const nameSel = document.createElement("select");
   nameSel.className = "ingredient-select";
   ingredientsData.forEach(({ name, unit }) => {
@@ -49,22 +49,35 @@ function addIngredient() {
     opt.textContent = `${name} (${unit})`;
     nameSel.appendChild(opt);
   });
+  row.appendChild(nameSel);
+
+  // 2️⃣ Qty field
+  const qtyInput = document.createElement("input");
+  qtyInput.type = "number";
+  qtyInput.placeholder = "Qty";
+  qtyInput.className = "qty-input";
+  row.appendChild(qtyInput);
+
+  // 3️⃣ Unit dropdown
+  const unitSel = document.createElement("select");
+  unitSel.className = "unit-select";
+  // Populate units based on first ingredient or default
+  Object.keys(weightToKg).forEach(u => {
+    const o = document.createElement("option");
+    o.value = u;
+    o.textContent = u;
+    unitSel.appendChild(o);
+  });
+  row.appendChild(unitSel);
+
+  // 4️⃣ Now that everything’s in the DOM, initialize Tom Select
+  container.appendChild(row);
   new TomSelect(nameSel, {
     create: false,
     sortField: { field: "text", direction: "asc" },
     placeholder: "Select an ingredient..."
   });
-
-  // 2️⃣ Quantity input
-  const qtyInput = document.createElement("input");
-  qtyInput.type = "number";
-  qtyInput.placeholder = "Qty";
-  qtyInput.className = "qty-input";
-
-  // 3️⃣ Unit dropdown
-  const unitSel = document.createElement("select");
-  unitSel.className = "unit-select";
-
+}
   // Determine base unit from first ingredient in list
   const baseUnit = ingredientsData[0]?.unit.toLowerCase() || "kg";
   // But we'll update choices once user picks an ingredient
