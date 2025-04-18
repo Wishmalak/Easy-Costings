@@ -1,9 +1,9 @@
-// ✅ Replace with your Google Apps Script Web App URL
+// Your published Apps Script Web App URL
 const API_URL = "https://script.google.com/macros/s/AKfycbw-JT6d9sVkxXSB9-oBDTGauDjg_UV5f9AG3ZofAH9sq5UWh4ohXOZd9y0LbcOn0Y3CHw/exec";
 
 let ingredientsData = [];
 
-// ── New: Convert imperial units into metric ─────────────────────────
+// ── Convert imperial units into metric ──────────────────────────────
 function convertToMetric(qty, unit) {
   const conversions = {
     "oz":    { qty: qty *   28.35, unit: "g"  },
@@ -16,19 +16,21 @@ function convertToMetric(qty, unit) {
   return conversions[unit] || { qty, unit };
 }
 
-// ── Fetch ingredients on page load ──────────────────────────────────
-fetch(`${API_URL}?list=ingredients`)
-  .then(res => {
-    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-    return res.json();
-  })
-  .then(data => {
-    ingredientsData = data;
-    addIngredient(); // Add the first ingredient row
-  })
-  .catch(err => console.error("Error loading ingredients:", err));
+// ── Fetch ingredients when page loads ───────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  fetch(`${API_URL}?list=ingredients`)
+    .then(res => {
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+      return res.json();
+    })
+    .then(data => {
+      ingredientsData = data;
+      addIngredient();  // add initial row
+    })
+    .catch(err => console.error("Error loading ingredients:", err));
+});
 
-// ── Function to add a new ingredient row ────────────────────────────
+// ── Add a new ingredient row with Tom Select dropdown ──────────────
 function addIngredient() {
   const container = document.getElementById("ingredient-list");
   const row = document.createElement("div");
@@ -37,7 +39,6 @@ function addIngredient() {
   // Create the <select> and populate it
   const select = document.createElement("select");
   select.className = "ingredient-select";
-
   ingredientsData.forEach(({ name, unit }) => {
     const opt = document.createElement("option");
     opt.value = name;
@@ -62,7 +63,7 @@ function addIngredient() {
   });
 }
 
-// ── Enhanced: Calculate totals with metric conversion ───────────────
+// ── Calculate total, line-item, adjusted & per-portion costs ───────
 function calculateTotal() {
   const yieldVal = Number(document.getElementById("yield").value) || 1;
   const wastage  = (Number(document.getElementById("wastage").value) || 0) / 100;
@@ -87,7 +88,7 @@ function calculateTotal() {
   const perPortion = adjusted / yieldVal;
 
   output += `\nTotal Cost: $${totalCost.toFixed(2)}\n`;
-  output += `Adjusted (with wastage): $${adjusted.toFixed(2)}\n`;
+  output += `Adjusted (w/ wastage): $${adjusted.toFixed(2)}\n`;
   output += `Cost per Portion: $${perPortion.toFixed(2)}`;
 
   document.getElementById("total-output").textContent = output;
