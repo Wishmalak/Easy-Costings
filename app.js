@@ -1,4 +1,4 @@
-// ✅ Replace with your Google Apps Script Web App URL
+
 const API_URL = "https://script.google.com/macros/s/AKfycbw-JT6d9sVkxXSB9-oBDTGauDjg_UV5f9AG3ZofAH9sq5UWh4ohXOZd9y0LbcOn0Y3CHw/exec";
 
 let ingredientsData = [];
@@ -24,19 +24,21 @@ function convertToMetric(qty, unit) {
   return conversions[u] || { qty, unit };
 }
 
-// ── Fetch ingredients when page loads
-fetch(`${API_URL}?list=ingredients`)
-  .then(res => {
-    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-    return res.json();
-  })
-  .then(data => {
-    ingredientsData = data;
-    addIngredient(); // Add initial row
-  })
-  .catch(err => console.error("Error loading ingredients:", err));
+// ── Fetch ingredients when page loads ───────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  fetch(`${API_URL}?list=ingredients`)
+    .then(res => {
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+      return res.json();
+    })
+    .then(data => {
+      ingredientsData = data;
+      addIngredient();  // Add initial row
+    })
+    .catch(err => console.error("Error loading ingredients:", err));
+});
 
-// ── Add a new ingredient row with Tom Select dropdown
+// ── Add a new ingredient row with Tom Select dropdown ──────────────
 function addIngredient() {
   const container = document.getElementById("ingredient-list");
   const row = document.createElement("div");
@@ -69,7 +71,7 @@ function addIngredient() {
   });
 }
 
-// ── Calculate total, line-item, adjusted & per-portion costs
+// ── Calculate total, line-item, adjusted & per-portion costs ───────
 function calculateTotal() {
   const yieldVal = Number(document.getElementById("yield").value) || 1;
   const wastage  = (Number(document.getElementById("wastage").value) || 0) / 100;
@@ -82,7 +84,7 @@ function calculateTotal() {
     const ing     = ingredientsData.find(i => i.name === name);
     if (!ing) return;
 
-    // Convert to metric
+    // Convert to metric units
     const { qty: mQty, unit: mUnit } = convertToMetric(rawQty, ing.unit);
     const lineCost = mQty * ing.costPerUnit;
     totalCost += lineCost;
@@ -90,7 +92,9 @@ function calculateTotal() {
     output += `${name}: ${mQty.toFixed(2)} ${mUnit} × $${ing.costPerUnit.toFixed(2)} = $${lineCost.toFixed(2)}\n`;
   });
 
-  const adjusted   = totalCost / (1 - wastage);
+  const adjusted   = totalCost 
+    ? totalCost / (1 - wastage) 
+    : 0;
   const perPortion = adjusted / yieldVal;
 
   output += `\nTotal Cost: $${totalCost.toFixed(2)}\n`;
