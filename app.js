@@ -3,17 +3,25 @@ const API_URL = "https://script.google.com/macros/s/AKfycbw-JT6d9sVkxXSB9-oBDTGa
 
 let ingredientsData = [];
 
-// ── Convert imperial units to metric
+// ── Convert various units to metric (grams or millilitres) ─────────
 function convertToMetric(qty, unit) {
+  const u = unit.trim().toLowerCase();
   const conversions = {
+    // Imperial → Metric
     "oz":    { qty: qty *   28.35, unit: "g"  },
     "lb":    { qty: qty *  453.59, unit: "g"  },
     "fl oz": { qty: qty *   29.57, unit: "ml" },
     "cup":   { qty: qty *  240.00, unit: "ml" },
     "tbsp":  { qty: qty *   15.00, unit: "ml" },
     "tsp":   { qty: qty *    5.00, unit: "ml" },
+    // Metric → Metric
+    "kg":    { qty: qty * 1000.00, unit: "g"  },
+    "g":     { qty: qty,           unit: "g"  },
+    "mg":    { qty: qty / 1000.00, unit: "g"  },
+    "l":     { qty: qty * 1000.00, unit: "ml" },
+    "ml":    { qty: qty,           unit: "ml" }
   };
-  return conversions[unit] || { qty, unit };
+  return conversions[u] || { qty, unit };
 }
 
 // ── Fetch ingredients when page loads
