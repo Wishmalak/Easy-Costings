@@ -1,9 +1,9 @@
-// Your published Apps Script Web App URL
+// ✅ Replace with your Google Apps Script Web App URL
 const API_URL = "https://script.google.com/macros/s/AKfycbw-JT6d9sVkxXSB9-oBDTGauDjg_UV5f9AG3ZofAH9sq5UWh4ohXOZd9y0LbcOn0Y3CHw/exec";
 
 let ingredientsData = [];
 
-// ── Convert imperial units into metric ──────────────────────────────
+// ── Convert imperial units to metric
 function convertToMetric(qty, unit) {
   const conversions = {
     "oz":    { qty: qty *   28.35, unit: "g"  },
@@ -16,27 +16,25 @@ function convertToMetric(qty, unit) {
   return conversions[unit] || { qty, unit };
 }
 
-// ── Fetch ingredients when page loads ───────────────────────────────
-document.addEventListener("DOMContentLoaded", () => {
-  fetch(`${API_URL}?list=ingredients`)
-    .then(res => {
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-      return res.json();
-    })
-    .then(data => {
-      ingredientsData = data;
-      addIngredient();  // add initial row
-    })
-    .catch(err => console.error("Error loading ingredients:", err));
-});
+// ── Fetch ingredients when page loads
+fetch(`${API_URL}?list=ingredients`)
+  .then(res => {
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+    return res.json();
+  })
+  .then(data => {
+    ingredientsData = data;
+    addIngredient(); // Add initial row
+  })
+  .catch(err => console.error("Error loading ingredients:", err));
 
-// ── Add a new ingredient row with Tom Select dropdown ──────────────
+// ── Add a new ingredient row with Tom Select dropdown
 function addIngredient() {
   const container = document.getElementById("ingredient-list");
   const row = document.createElement("div");
   row.classList.add("ingredient-row");
 
-  // Create the <select> and populate it
+  // Create and populate <select>
   const select = document.createElement("select");
   select.className = "ingredient-select";
   ingredientsData.forEach(({ name, unit }) => {
@@ -55,7 +53,7 @@ function addIngredient() {
   row.append(select, qtyInput);
   container.appendChild(row);
 
-  // Initialize Tom Select on this new <select>
+  // Initialize Tom Select on the select
   new TomSelect(select, {
     create: false,
     sortField: { field: "text", direction: "asc" },
@@ -63,7 +61,7 @@ function addIngredient() {
   });
 }
 
-// ── Calculate total, line-item, adjusted & per-portion costs ───────
+// ── Calculate total, line-item, adjusted & per-portion costs
 function calculateTotal() {
   const yieldVal = Number(document.getElementById("yield").value) || 1;
   const wastage  = (Number(document.getElementById("wastage").value) || 0) / 100;
