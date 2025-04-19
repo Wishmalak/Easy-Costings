@@ -1,4 +1,4 @@
- const API = "YOUR_APPS_SCRIPT_URL"; // from Deploy
+ const API = "https://script.google.com/macros/s/AKfycbxN4pb34MfDWdsNKpNGYACfDpX0g0nSWCx-LAm3maBxkA46w0YUy95D9EmTPzEf4ehn1A/exec"; // from Deploy
     let ingredients=[];
 
     // Fetch ingredients + currencies + geolocation on load
