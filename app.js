@@ -1,196 +1,108 @@
-// ✅ Replace with your Google Apps Script Web App URL
-const API_URL = "https://script.google.com/macros/s/AKfycbw-JT6d9sVkxXSB9-oBDTGauDjg_UV5f9AG3ZofAH9sq5UWh4ohXOZd9y0LbcOn0Y3CHw/exec";
+ const API = "YOUR_APPS_SCRIPT_URL"; // from Deploy
+    let ingredients=[];
 
-let ingredientsData = [];
+    // Fetch ingredients + currencies + geolocation on load
+    window.onload = async () => {
+      [ingredients, currencies] = await Promise.all([
+        fetch(`${API}?list=ingredients`).then(r=>r.json()),
+        fetch(`https://api.exchangerate.host/symbols`).then(r=>r.json()).then(j=>Object.keys(j.symbols))
+      ]);
+      populateCurrency(currencies);
+      addRow();
+      // Attempt geolocation
+      fetch("http://ip-api.com/json/?fields=countryCode") // :contentReference[oaicite:11]{index=11}
+        .then(r=>r.json()).then(j=>document.getElementById("country").value=j.countryCode)
+        .catch(()=>{}); 
+    };
 
-// ── Maps for converting any unit → base unit (kg or l) ────────────────
-const weightToKg = {
-  kg: 1,
-  g:  1/1000,
-  mg: 1/1e6,
-  lb: 0.453592,
-  oz: 0.0283495
-};
-const volumeToL  = {
-  l:     1,
-  ml:    1/1000,
-  cup:   0.24,
-  tbsp:  0.015,
-  tsp:   0.005,
-  "fl oz": 0.0295735
-};
+    function populateCurrency(list){
+      const cur = document.getElementById("currency");
+      list.forEach(c=>{
+        const o=document.createElement("option");
+        o.value=c; o.innerText=c;
+        cur.appendChild(o);
+      });
+    }
 
-// ── Fetch ingredients when page loads ───────────────────────────────
-document.addEventListener("DOMContentLoaded", () => {
-  fetch(`${API_URL}?list=ingredients`)
-    .then(res => {
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-      return res.json();
-    })
-    .then(data => {
-      ingredientsData = data;
-      addIngredient();  // Add the first ingredient row
-    })
-    .catch(err => console.error("Error loading ingredients:", err));
-});
+    function addRow(){
+      const container = document.getElementById("ingredient-list");
+      const row = document.createElement("div"); row.className="row";
+      const select = document.createElement("select");
+      ingredients.forEach(i=>{
+        const o=document.createElement("option");
+        o.value=i.name; o.text=i.name+` (${i.unit})`;
+        select.appendChild(o);
+      });
+      const qty = document.createElement("input"); qty.type="number"; qty.placeholder="Qty";
+      const unit = document.createElement("select");
+      // populate unit based on first ingredient
+      new TomSelect(select,{}); select.onchange = ()=>populateUnits(select,unit);
+      populateUnits(select,unit);
+      row.append(select,qty,unit);
+      container.append(row);
+    }
 
-function addIngredient() {
-  const container = document.getElementById("ingredient-list");
-  const row = document.createElement("div");
-  row.classList.add("ingredient-row");
+    function populateUnits(sel,unitSel){
+      const ing = ingredients.find(i=>i.name===sel.value);
+      unitSel.innerHTML="";
+      const units = ing.unit.match(/kg|g|mg/)?["kg","g","mg"]:["l","ml","cup","tbsp","tsp"];
+      units.forEach(u=>unitSel.add(new Option(u,u)));
+    }
 
-  // Name dropdown
-  const nameSel = document.createElement("select");
-  nameSel.className = "ingredient-select";
-  ingredientsData.forEach(({ name, unit }) => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = `${name} (${unit})`;
-    nameSel.appendChild(opt);
-  });
+    // Gather rows and call calculate endpoint
+    async function calculate(){
+      const items = [...document.querySelectorAll("#ingredient-list .row")].map(r=>({
+        name: r.querySelector("select").value,
+        qty:  Number(r.querySelector("input").value),
+        unit: r.querySelectorAll("select")[1].value
+      }));
+      const payload = {
+        items,
+        margin: Number(document.getElementById("margin").value),
+        wastage: Number(document.getElementById("wastage").value),
+        countryCode: document.getElementById("country").value,
+        currency: document.getElementById("currency").value
+      };
+      const res = await fetch(`${API}?calculate=1&calculateData=${encodeURIComponent(JSON.stringify(payload))}`);
+      const j   = await res.json();
+      document.getElementById("results").innerText = JSON.stringify(j, null, 2);
+    }
 
-  // Qty input
-  const qtyInput = document.createElement("input");
-  qtyInput.type = "number";
-  qtyInput.placeholder = "Qty";
-  qtyInput.className = "qty-input";
+    // Save recipe
+    async function submitRecipe(){
+      const name = prompt("Recipe name?");
+      if(!name) return;
+      const items = [...document.querySelectorAll("#ingredient-list .row")].map(r=>({
+        name: r.querySelector("select").value,
+        qty:  Number(r.querySelector("input").value),
+        unit: r.querySelectorAll("select")[1].value
+      }));
+      const recipe={ userEmail:"user@example.com", name, items,
+                     yield:Number(document.getElementById("yield").value),
+                     wastage:Number(document.getElementById("wastage").value)
+                   };
+      await fetch(`${API}?list=saveRecipe&saveRecipe=${encodeURIComponent(JSON.stringify(recipe))}`);
+      alert("Recipe saved!");
+    }
 
-  // Unit dropdown
-  const unitSel = document.createElement("select");
-  unitSel.className = "unit-select";
-
-  // ➕ Dynamic unit population based on ingredient
-  function populateUnits() {
-    const ing = ingredientsData.find(i => i.name === nameSel.value);
-    const bu = ing?.unit.toLowerCase() || "kg";
-    unitSel.innerHTML = ""; // Clear previous
-    const opts = (bu === "kg" || bu === "g" || bu === "mg")
-      ? Object.keys(weightToKg)
-      : Object.keys(volumeToL);
-    opts.forEach(u => {
-      const o = document.createElement("option");
-      o.value = u;
-      o.textContent = u;
-      unitSel.appendChild(o);
-    });
-  }
-
-  nameSel.addEventListener("change", populateUnits);
-  populateUnits(); // Initial fill
-
-  // Add elements to row and DOM
-  row.append(nameSel, qtyInput, unitSel);
-  container.appendChild(row);
-
-  // Initialize Tom Select
-  new TomSelect(nameSel, {
-    create: false,
-    sortField: { field: "text", direction: "asc" },
-    placeholder: "Select an ingredient..."
-  });
-}
-
-  nameSel.addEventListener("change", populateUnits);
-  populateUnits(); // Initial fill
-
-  // Add elements to row and DOM
-  row.append(nameSel, qtyInput, unitSel);
-  container.appendChild(row);
-
-  // Initialize Tom Select
-  new TomSelect(nameSel, {
-    create: false,
-    sortField: { field: "text", direction: "asc" },
-    placeholder: "Select an ingredient..."
-  });
-}
-  // Determine base unit from first ingredient in list
-  const baseUnit = ingredientsData[0]?.unit.toLowerCase() || "kg";
-  // But we'll update choices once user picks an ingredient
-  function populateUnits() {
-    const ing = ingredientsData.find(i => i.name === nameSel.value);
-    const bu = ing.unit.toLowerCase();
-    unitSel.innerHTML = ""; // clear
-    const opts = (bu === "kg" || bu === "g" || bu === "mg")
-      ? Object.keys(weightToKg)
-      : Object.keys(volumeToL);
-    opts.forEach(u => {
-      const o = document.createElement("option");
-      o.value = u;
-      o.textContent = u;
-      unitSel.appendChild(o);
-    });
-  }
-  nameSel.addEventListener("change", populateUnits);
-  populateUnits(); // initial fill
-
-  // Put it all together
-  row.append(nameSel, qtyInput, unitSel);
-  container.appendChild(row);
-}
-
-// ── Convert any qty[fromUnit] → baseUnitQty (kg or l) ──────────────
-function convertToBase(qty, fromUnit, baseUnit) {
-  const u = fromUnit.trim().toLowerCase();
-  if (["kg","g","mg","lb","oz"].includes(u) && ["kg","g","mg","lb","oz"].includes(baseUnit)) {
-    // we want qty in baseUnit ➔ convert to kg then, if baseUnit != kg convert further
-    const qtyInKg = (weightToKg[u] || 0) * qty;
-    return baseUnit === "kg"
-      ? qtyInKg
-      : baseUnit === "g"
-        ? qtyInKg * 1000
-        : baseUnit === "mg"
-          ? qtyInKg * 1e6
-          : 0;
-  }
-  if (["l","ml","cup","tbsp","tsp","fl oz"].includes(u) && ["l","ml","cup","tbsp","tsp","fl oz"].includes(baseUnit)) {
-    const qtyInL = (volumeToL[u] || 0) * qty;
-    return baseUnit === "l"
-      ? qtyInL
-      : baseUnit === "ml"
-        ? qtyInL * 1000
-        : 0;
-  }
-  // fallback: no conversion
-  return qty;
-}
-
-// ── Format a base‑unit qty into neat metric display (g or ml) ───────
-function formatMetricDisplay(baseQty, baseUnit) {
-  // use our old convert‑to‑metric map for display
-  const metric = convertToMetric(baseQty, baseUnit);
-  return `${metric.qty.toFixed(2)} ${metric.unit}`;
-}
-
-// ── Calculate total, show line‑items & final numbers ────────────────
-function calculateTotal() {
-  const yieldVal = Number(document.getElementById("yield").value) || 1;
-  const wastage  = (Number(document.getElementById("wastage").value) || 0) / 100;
-  let totalCost = 0;
-  let output    = "";
-
-  document.querySelectorAll("#ingredient-list > .ingredient-row").forEach(row => {
-    const name       = row.querySelector(".ingredient-select").value;
-    const rawQty     = Number(row.querySelector(".qty-input").value) || 0;
-    const pickUnit   = row.querySelector(".unit-select").value;
-    const ing        = ingredientsData.find(i => i.name === name);
-    if (!ing) return;
-
-    const baseQty    = convertToBase(rawQty, pickUnit, ing.unit.toLowerCase());
-    const lineCost   = baseQty * ing.costPerUnit;
-    totalCost       += lineCost;
-
-    // display in nice metric units
-    const disp       = formatMetricDisplay(baseQty, ing.unit.toLowerCase());
-    output += `${name}: ${disp} × $${ing.costPerUnit.toFixed(2)} = $${lineCost.toFixed(2)}\n`;
-  });
-
-  const adjusted   = totalCost / (1 - wastage);
-  const perPortion = adjusted / yieldVal;
-
-  output += `\nTotal Cost: $${totalCost.toFixed(2)}\n`;
-  output += `Adjusted (with wastage): $${adjusted.toFixed(2)}\n`;
-  output += `Cost per Portion: $${perPortion.toFixed(2)}`;
-
-  document.getElementById("total-output").textContent = output;
-}
+    // Photo upload
+    function uploadPhoto(){
+      const file = document.getElementById("photo").files[0];
+      const fr   = new FileReader();
+      fr.onload = async e=>{
+        const blobArr = [...new Int8Array(e.target.result)];
+        const qs = new URLSearchParams({
+          list:"uploadPhoto",
+          filename:file.name,
+          mimeType:file.type
+        });
+        const res = await fetch(`${API}?${qs}`, {
+          method:"POST",
+          body: JSON.stringify(blobArr)
+        });
+        const j = await res.json();
+        document.getElementById("photoUrl").innerHTML =
+          `<a href="${j.url}" target="_blank">View Photo</a>`;
+      };
+      fr.readAsArrayBuffer(file);
+    }
