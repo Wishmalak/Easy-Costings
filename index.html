@@ -18,29 +18,107 @@
   <button onclick="addRow()">+ Ingredient</button>
 
   <h3>Settings</h3>
-  <label>Yield: <input type="number" id="yield" value="1" min="1"></label>
-  <label>Wastage %: <input type="number" id="wastage" value="0" min="0" max="100"></label>
-  <label>Margin %:  <input type="number" id="margin" value="0" min="0" max="100"></label><br>
+  <label<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Recipe Costing App</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css"/>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-4">Build Your Recipe</h1>
 
-  <label>Currency:
-    <select id="currency"></select>
-  </label>
-  <label>Location (Country Code):
-    <input type="text" id="country" placeholder="e.g. US">
-  </label><br>
+    <!-- Auth -->
+    <div id="authUI" class="mb-4">
+      <input id="email" type="email" placeholder="Email"
+        class="border p-2 mr-2"/>
+      <input id="password" type="password" placeholder="Password"
+        class="border p-2 mr-2"/>
+      <button id="loginBtn"
+        class="bg-blue-500 text-white px-4 py-2 rounded">Login</button>
+      <button id="signupBtn"
+        class="bg-green-500 text-white px-4 py-2 rounded">Sign Up</button>
+    </div>
 
-  <button onclick="submitRecipe()">Save Recipe</button>
-  <button onclick="calculate()">Calculate Cost</button>
+    <!-- Recipe rows -->
+    <div id="ingredient-list"></div>
+    <button onclick="addRow()"
+      class="mt-2 bg-indigo-500 text-white px-4 py-1 rounded">+ Ingredient</button>
 
-  <h3>Result</h3>
-  <div id="results"></div>
+    <!-- Settings -->
+    <div class="mt-4 space-x-4">
+      <label>Yield:<input id="yield" type="number" value="1"
+        class="border p-1 w-20"/></label>
+      <label>Wastage %:<input id="wastage" type="number" value="0"
+        class="border p-1 w-20"/></label>
+      <label>Margin %:<input id="margin" type="number" value="0"
+        class="border p-1 w-20"/></label>
+    </div>
+    <div class="mt-4 space-x-4">
+      <label>Country:<input id="country" placeholder="US"
+        class="border p-1 w-24"/></label>
+      <label>Currency:<select id="currency"
+        class="border p-1 w-24"></select></label>
+    </div>
 
-  <h3>Upload Photo</h3>
-  <input type="file" id="photo"><button onclick="uploadPhoto()">Upload</button>
-  <div id="photoUrl"></div>
+    <div class="mt-4 space-x-4">
+      <button onclick="calculate()"
+        class="bg-green-500 text-white px-4 py-2 rounded">Calculate</button>
+      <button onclick="submitRecipe()"
+        class="bg-blue-600 text-white px-4 py-2 rounded">Save Recipe</button>
+    </div>
 
+    <h2 class="mt-6 text-xl font-semibold">Result</h2>
+    <pre id="results" class="bg-gray-100 p-3 rounded"></pre>
+
+    <!-- Modal trigger -->
+    <button onclick="showModal()"
+      class="mt-4 bg-yellow-500 text-white px-4 py-2 rounded"
+      >Add New Ingredient</button>
+
+    <!-- Tailwind Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+      <div class="bg-white p-6 rounded shadow-lg w-96">
+        <h3 class="text-lg mb-2">Add Ingredient</h3>
+        <input id="newName" placeholder="Name" class="border p-2 w-full mb-2"/>
+        <input id="newCost" placeholder="Cost per Unit" type="number"
+          class="border p-2 w-full mb-2"/>
+        <input id="newUnit" placeholder="Unit (e.g. kg)" class="border p-2 w-full mb-2"/>
+        <input id="newVendor" placeholder="Vendor" class="border p-2 w-full mb-2"/>
+        <div class="text-right space-x-2">
+          <button onclick="hideModal()" class="px-4 py-2">Cancel</button>
+          <button onclick="saveNewIngredient()"
+            class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="mt-6 text-xl font-semibold">Upload Photo</h2>
+    <input type="file" id="photo" class="border p-2"/><button onclick="uploadPhoto()"
+      class="ml-2 bg-purple-500 text-white px-4 py-2 rounded">Upload</button>
+    <div id="photoUrl" class="mt-2"></div>
+  </div>
+
+  <!-- Firebase & Tom Select & App Logic -->
   <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-  <script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js'; // :contentReference[oaicite:2]{index=2}&#8203;:contentReference[oaicite:3]{index=3}  
+2. RapidAPI Grocery Prices API :contentReference[oaicite:4]{index=4}  
+3. UrlFetch service examples :contentReference[oaicite:5]{index=5}  
+4. Firebase Auth web setup   
+5. Tom Select documentation   
+6. Exchangerate.host Open API   
+7. DriveApp file upload :contentReference[oaicite:6]{index=6}  
+8. ip-api geolocation   
+9. Tailwind CSS CDN use :contentReference[oaicite:7]{index=7}  
+10. Flowbite modal docs :contentReference[oaicite:8]{index=8}
+::contentReference[oaicite:9]{index=9}
+
   </script>
 </body>
 </html>
