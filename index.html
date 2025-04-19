@@ -2,47 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Recipe Builder</title>
-
-  <!-- Tom Select CSS -->
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Custom Recipe Builder</title>
   <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet" />
-  
-
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    select, input { margin: 5px; padding: 5px; }
-    #ingredient-list div { margin-bottom: 10px; }
-    button { margin: 5px; padding: 5px 10px; }
+    body { font-family:sans-serif; max-width:800px; margin:auto; padding:1rem; }
+    .row { display:flex; gap:0.5rem; margin-bottom:0.5rem; }
+    select, input, button { padding:0.5rem; font-size:1rem; }
+    #results { white-space:pre-wrap; background:#f9f9f9; padding:1rem; }
   </style>
 </head>
 <body>
-  <h1>Create Your Recipe</h1>
-
-  <!-- Ingredient rows -->
+  <h1>Build Your Recipe</h1>
   <div id="ingredient-list"></div>
+  <button onclick="addRow()">+ Ingredient</button>
 
-  <!-- Buttons for adding ingredients and calculating -->
-<button onclick="addIngredient()">Add Ingredient</button>
-  <button onclick="calculateTotal()">Calculate Cost</button>
+  <h3>Settings</h3>
+  <label>Yield: <input type="number" id="yield" value="1" min="1"></label>
+  <label>Wastage %: <input type="number" id="wastage" value="0" min="0" max="100"></label>
+  <label>Margin %:  <input type="number" id="margin" value="0" min="0" max="100"></label><br>
 
-  <h3>Recipe Settings</h3>
-  <label>
-    Yield (portions):
-    <input type="number" id="yield" value="1" min="1">
+  <label>Currency:
+    <select id="currency"></select>
+  </label>
+  <label>Location (Country Code):
+    <input type="text" id="country" placeholder="e.g. US">
   </label><br>
-  <label>
-    Wastage (%):
-    <input type="number" id="wastage" value="0" min="0" max="100">
-  </label><br>
+
+  <button onclick="submitRecipe()">Save Recipe</button>
+  <button onclick="calculate()">Calculate Cost</button>
 
   <h3>Result</h3>
-  <pre id="total-output"></pre>
+  <div id="results"></div>
 
-  <!-- Tom Select JS -->
+  <h3>Upload Photo</h3>
+  <input type="file" id="photo"><button onclick="uploadPhoto()">Upload</button>
+  <div id="photoUrl"></div>
+
   <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-
-  <!-- Your application logic -->
-  <script src="app.js"></script>
-</body>
-</html>
+  <script>
