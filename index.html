@@ -2,53 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Custom Recipe Builder</title>
-  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet" />
-  <style>
-    body { font-family:sans-serif; max-width:800px; margin:auto; padding:1rem; }
-    .row { display:flex; gap:0.5rem; margin-bottom:0.5rem; }
-    select, input, button { padding:0.5rem; font-size:1rem; }
-    #results { white-space:pre-wrap; background:#f9f9f9; padding:1rem; }
-  </style>
-</head>
-<body>
-  <h1>Build Your Recipe</h1>
-  <div id="ingredient-list"></div>
-  <button onclick="addRow()">+ Ingredient</button>
-
-  <h3>Settings</h3>
-  <label<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Recipe Costing App</title>
+
   <!-- Tailwind CSS via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com"></script> 
+
+  <!-- Tom Select CSS for autocomplete dropdowns -->
   <link rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css"/>
+    href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css"/> :contentReference[oaicite:8]{index=8}
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script> :contentReference[oaicite:9]{index=9}
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js"></script> :contentReference[oaicite:10]{index=10}
+
 </head>
 <body class="bg-gray-100 p-6">
+
+  <!-- Auth UI -->
+  <div id="authUI" class="mb-6">
+    <input id="email"    type="email"    placeholder="Email"    class="border p-2 mr-2"/>
+    <input id="password" type="password" placeholder="Password" class="border p-2 mr-2"/>
+    <button id="loginBtn"
+      class="bg-blue-500 text-white px-4 py-2 rounded">Log In</button>
+    <button id="signupBtn"
+      class="bg-green-500 text-white px-4 py-2 rounded">Sign Up</button>
+    <button id="googleBtn"
+      class="bg-red-500 text-white px-4 py-2 rounded">Google</button>
+  </div>
+
   <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
     <h1 class="text-2xl font-bold mb-4">Build Your Recipe</h1>
 
-    <!-- Auth -->
-    <div id="authUI" class="mb-4">
-      <input id="email" type="email" placeholder="Email"
-        class="border p-2 mr-2"/>
-      <input id="password" type="password" placeholder="Password"
-        class="border p-2 mr-2"/>
-      <button id="loginBtn"
-        class="bg-blue-500 text-white px-4 py-2 rounded">Login</button>
-      <button id="signupBtn"
-        class="bg-green-500 text-white px-4 py-2 rounded">Sign Up</button>
-    </div>
-
-    <!-- Recipe rows -->
-    <div id="ingredient-list"></div>
+    <!-- Ingredient Rows -->
+    <div id="ingredient-list" class="space-y-2"></div>
     <button onclick="addRow()"
-      class="mt-2 bg-indigo-500 text-white px-4 py-1 rounded">+ Ingredient</button>
+      class="mt-2 bg-indigo-500 text-white px-4 py-2 rounded">+ Ingredient</button>
 
     <!-- Settings -->
     <div class="mt-4 space-x-4">
@@ -60,12 +49,13 @@
         class="border p-1 w-20"/></label>
     </div>
     <div class="mt-4 space-x-4">
-      <label>Country:<input id="country" placeholder="US"
+      <label>Country Code:<input id="country" placeholder="e.g. US"
         class="border p-1 w-24"/></label>
       <label>Currency:<select id="currency"
         class="border p-1 w-24"></select></label>
     </div>
 
+    <!-- Actions -->
     <div class="mt-4 space-x-4">
       <button onclick="calculate()"
         class="bg-green-500 text-white px-4 py-2 rounded">Calculate</button>
@@ -73,23 +63,24 @@
         class="bg-blue-600 text-white px-4 py-2 rounded">Save Recipe</button>
     </div>
 
+    <!-- Results -->
     <h2 class="mt-6 text-xl font-semibold">Result</h2>
     <pre id="results" class="bg-gray-100 p-3 rounded"></pre>
 
-    <!-- Modal trigger -->
+    <!-- Modal Trigger -->
     <button onclick="showModal()"
       class="mt-4 bg-yellow-500 text-white px-4 py-2 rounded"
       >Add New Ingredient</button>
 
-    <!-- Tailwind Modal -->
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <!-- Add Ingredient Modal -->
+    <div id="modal"
+      class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center"> <!-- :contentReference[oaicite:11]{index=11} -->
       <div class="bg-white p-6 rounded shadow-lg w-96">
         <h3 class="text-lg mb-2">Add Ingredient</h3>
-        <input id="newName" placeholder="Name" class="border p-2 w-full mb-2"/>
-        <input id="newCost" placeholder="Cost per Unit" type="number"
-          class="border p-2 w-full mb-2"/>
-        <input id="newUnit" placeholder="Unit (e.g. kg)" class="border p-2 w-full mb-2"/>
-        <input id="newVendor" placeholder="Vendor" class="border p-2 w-full mb-2"/>
+        <input id="newName"   placeholder="Name"           class="border p-2 w-full mb-2"/>
+        <input id="newCost"   placeholder="Cost per Unit"  class="border p-2 w-full mb-2"/>
+        <input id="newUnit"   placeholder="Unit (e.g. kg)" class="border p-2 w-full mb-2"/>
+        <input id="newVendor" placeholder="Vendor"         class="border p-2 w-full mb-2"/>
         <div class="text-right space-x-2">
           <button onclick="hideModal()" class="px-4 py-2">Cancel</button>
           <button onclick="saveNewIngredient()"
@@ -98,27 +89,16 @@
       </div>
     </div>
 
+    <!-- Photo Upload -->
     <h2 class="mt-6 text-xl font-semibold">Upload Photo</h2>
-    <input type="file" id="photo" class="border p-2"/><button onclick="uploadPhoto()"
+    <input type="file" id="photo" class="border p-2"/>
+    <button onclick="uploadPhoto()"
       class="ml-2 bg-purple-500 text-white px-4 py-2 rounded">Upload</button>
     <div id="photoUrl" class="mt-2"></div>
   </div>
 
-  <!-- Firebase & Tom Select & App Logic -->
-  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js'; // :contentReference[oaicite:2]{index=2}&#8203;:contentReference[oaicite:3]{index=3}  
-2. RapidAPI Grocery Prices API :contentReference[oaicite:4]{index=4}  
-3. UrlFetch service examples :contentReference[oaicite:5]{index=5}  
-4. Firebase Auth web setup   
-5. Tom Select documentation   
-6. Exchangerate.host Open API   
-7. DriveApp file upload :contentReference[oaicite:6]{index=6}  
-8. ip-api geolocation   
-9. Tailwind CSS CDN use :contentReference[oaicite:7]{index=7}  
-10. Flowbite modal docs :contentReference[oaicite:8]{index=8}
-::contentReference[oaicite:9]{index=9}
-
-  </script>
+  <!-- Tom Select & App Logic -->
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script> :contentReference[oaicite:12]{index=12}
+  <script type="module" src="app.js"></script>
 </body>
 </html>
