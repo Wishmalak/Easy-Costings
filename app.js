@@ -89,6 +89,21 @@ function addIngredient() {
     placeholder: "Select an ingredient..."
   });
 }
+
+  nameSel.addEventListener("change", populateUnits);
+  populateUnits(); // Initial fill
+
+  // Add elements to row and DOM
+  row.append(nameSel, qtyInput, unitSel);
+  container.appendChild(row);
+
+  // Initialize Tom Select
+  new TomSelect(nameSel, {
+    create: false,
+    sortField: { field: "text", direction: "asc" },
+    placeholder: "Select an ingredient..."
+  });
+}
   // Determine base unit from first ingredient in list
   const baseUnit = ingredientsData[0]?.unit.toLowerCase() || "kg";
   // But we'll update choices once user picks an ingredient
